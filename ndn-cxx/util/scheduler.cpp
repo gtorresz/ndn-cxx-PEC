@@ -143,8 +143,12 @@ Scheduler::cancelAllEvents()
 void
 Scheduler::scheduleNext()
 {
+auto now = ns3::Simulator::Now();
   if (!m_queue.empty()) {
-    m_timerEvent = ns3::Simulator::Schedule(ns3::NanoSeconds((*m_queue.begin())->expiresFromNow().count()),
+	  //Check for event duplicates
+     if(now.GetSeconds() > 0 && m_nextScheduled.GetNanoSeconds() == (ns3::NanoSeconds((*m_queue.begin())->expiresFromNow().count()).GetNanoSeconds()+ now.GetNanoSeconds()))  return;
+     else m_nextScheduled = ns3::Time::From((ns3::NanoSeconds((*m_queue.begin())->expiresFromNow().count()).GetNanoSeconds()+ now.GetNanoSeconds()),ns3::Time::NS);
+     m_timerEvent = ns3::Simulator::Schedule(ns3::NanoSeconds((*m_queue.begin())->expiresFromNow().count()),
                                             &Scheduler::executeEvent, this);
   }
 }
@@ -162,6 +166,7 @@ Scheduler::executeEvent()
 
   // process all expired events
   auto now = time::steady_clock::now();
+auto ns3Now = ns3::Simulator::Now();
   while (!m_queue.empty()) {
     auto head = m_queue.begin();
     shared_ptr<EventInfo> info = *head;

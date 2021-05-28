@@ -27,7 +27,8 @@
 #include "ndn-cxx/util/time.hpp"
 
 #include "ns3/simulator.h"
-
+#include "ns3/nstime.h"
+#include <unordered_set>
 #include <set>
 
 namespace ndn {
@@ -171,6 +172,8 @@ private:
   };
 
   using EventQueue = std::multiset<shared_ptr<EventInfo>, EventQueueCompare>;
+  std::unordered_set<int64_t> m_scheduled;
+  ns3::Time m_nextScheduled;
   EventQueue m_queue;
 
   bool m_isEventExecuting = false;

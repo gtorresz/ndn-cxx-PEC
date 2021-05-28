@@ -244,6 +244,30 @@ public: // element access
   void
   refreshNonce();
 
+  Interest&
+  setSubscription(const uint32_t subsc);
+
+  /** @brief Get value of the subscription field
+  */
+  const uint32_t
+  getSubscription() const;
+
+  /** @brief Set value of the payload field
+  */
+  Interest&
+  setPayload(const uint8_t * payload, size_t length);
+
+  /** @brief Get value of the payload field
+  */
+  const uint8_t *
+  getPayload() const;
+
+  /** @brief Get the length of the payload field
+  */
+  size_t
+  getPayloadLength() const;
+
+
   time::milliseconds
   getInterestLifetime() const noexcept
   {
@@ -393,11 +417,13 @@ private:
   Name m_name;
   DelegationList m_forwardingHint;
   mutable optional<uint32_t> m_nonce;
+  mutable Block m_payload;
   time::milliseconds m_interestLifetime;
   optional<uint8_t> m_hopLimit;
   mutable bool m_isCanBePrefixSet = false;
   bool m_canBePrefix = true;
   bool m_mustBeFresh = false;
+uint32_t m_subscribe;
 
   // Stores the "Interest parameters", i.e., all maybe-unrecognized non-critical TLV
   // elements that appear at the end of the Interest, starting from ApplicationParameters.

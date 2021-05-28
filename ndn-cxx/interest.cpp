@@ -120,6 +120,18 @@ Interest::wireEncode(EncodingImpl<TAG>& encoder) const
 
   size_t totalLength = 0;
 
+  // Payload
+  if(getPayloadLength() != 0) {
+        totalLength += encoder.prependBlock(m_payload);
+  }
+
+  // Subscription
+  if (getSubscription() >= 0) {
+      totalLength += prependNonNegativeIntegerBlock(encoder,
+                                                    tlv::Subscription,
+                                                    getSubscription());
+  }
+
   // ApplicationParameters and following elements (in reverse order)
   std::for_each(m_parameters.rbegin(), m_parameters.rend(), [&] (const Block& b) {
     totalLength += encoder.prependBlock(b);
@@ -299,6 +311,25 @@ Interest::wireDecode(const Block& wire)
         lastElement = 8;
         break;
       }
+      // Subscription
+      case tlv::Subscription: {
+        if (lastElement >= 9) {
+          BOOST_THROW_EXCEPTION(Error("Parameters element is out of order"));
+        }
+        m_subscribe = readNonNegativeInteger(*element);
+        lastElement = 9;
+        break;
+      }
+
+      // Payload
+      case tlv::Payload: {
+        if (lastElement >= 10) {
+          BOOST_THROW_EXCEPTION(Error("Parameters element is out of order"));
+        }
+        m_payload = *element;
+        lastElement = 10;
+        break;
+      }
       default: { // unrecognized element
         // if the TLV-TYPE is critical, abort decoding
         if (tlv::isCriticalType(element->type())) {
@@ -413,6 +444,46 @@ Interest::setNonce(uint32_t nonce)
     m_nonce = nonce;
     m_wire.reset();
   }
+  return *this;
+}
+
+const uint32_t
+Interest::getSubscription() const
+{
+   return m_subscribe;
+
+}
+
+Interest&
+Interest::setSubscription(const uint32_t subsc)
+{
+
+   m_subscribe = subsc;
+
+   m_wire.reset();
+   return *this;
+
+}
+
+const uint8_t *
+Interest::getPayload() const
+{
+  return m_payload.value();
+}
+
+size_t
+Interest::getPayloadLength() const
+{
+  return m_payload.value_size();
+}
+
+Interest&
+Interest::setPayload(const uint8_t * payload, size_t length)
+{
+  m_payload = makeBinaryBlock(tlv::Payload,
+                              payload,
+                              length);
+  m_wire.reset();
   return *this;
 }
 
